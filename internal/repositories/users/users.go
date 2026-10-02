@@ -23,6 +23,18 @@ func (u *Users) GetAll() []models.User {
 	return u.users
 }
 
+func (u *Users) EmailExists(email string) bool {
+	u.mu.RLock()
+	defer u.mu.RUnlock()
+
+	for _, user := range u.users {
+		if user.Email == email {
+			return true
+		}
+	}
+	return false
+}
+
 func (u *Users) Add(newUser models.User) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
