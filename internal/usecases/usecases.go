@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Guiziin227/goCleanArc/internal/models"
@@ -18,23 +19,27 @@ func NewUseCases(repos *repositories.Repositories) *UseCases {
 	}
 }
 
-func (u UseCases) GetAll() []models.User {
-	users := u.Repos.User.GetAll()
-
-	return users
+func (u UseCases) GetAll(ctx context.Context) ([]models.User, error) {
+	return u.Repos.User.GetAll(ctx)
 }
 
-func (u UseCases) GetById(id uuid.UUID) (models.User, error) {
-	user := u.Repos.User.GetById(id)
+func (u UseCases) GetById(ctx context.Context, id uuid.UUID) (models.User, error) {
+	user, err := u.Repos.User.GetById(ctx, id)
+	if err != nil {
+		return models.User{}, err
+	}
 	if user.ID == uuid.Nil {
 		return models.User{}, fmt.Errorf("user not found")
 	}
 	return user, nil
 }
 
-func (u UseCases) Add(newUser models.CreateUserRequest) (uuid.UUID, error) {
+func (u UseCases) Add(ctx context.Context, newUser models.CreateUserRequest) (uuid.UUID, error) {
 
-	exists := u.Repos.User.EmailExists(newUser.Email)
+	exists, err := u.Repos.User.EmailExists(ctx, newUser.Email)
+	if err != nil {
+		return uuid.Nil, err
+	}
 	if exists {
 		return uuid.Nil, fmt.Errorf("email already exists")
 	}
@@ -45,7 +50,9 @@ func (u UseCases) Add(newUser models.CreateUserRequest) (uuid.UUID, error) {
 		Email: newUser.Email,
 	}
 
-	u.Repos.User.Add(repoReq)
+	if err := u.Repos.User.Add(ctx, repoReq); err != nil {
+		return uuid.Nil, err
+	}
 
 	return repoReq.ID, nil
 }

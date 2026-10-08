@@ -1,22 +1,27 @@
 package repositories
 
 import (
+	"context"
+	"database/sql"
+
 	"github.com/Guiziin227/goCleanArc/internal/models"
 	"github.com/Guiziin227/goCleanArc/internal/repositories/users"
 	"github.com/google/uuid"
 )
 
-type Repositories struct {
-	User interface {
-		GetAll() []models.User
-		Add(newUser models.User)
-		EmailExists(email string) bool
-		GetById(id uuid.UUID) models.User
-	}
+type UserRepository interface {
+	GetAll(ctx context.Context) ([]models.User, error)
+	Add(ctx context.Context, newUser models.User) error
+	EmailExists(ctx context.Context, email string) (bool, error)
+	GetById(ctx context.Context, id uuid.UUID) (models.User, error)
 }
 
-func NewRepositories() *Repositories {
+type Repositories struct {
+	User UserRepository
+}
+
+func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User: users.NewUsers(),
+		User: users.NewUsers(db),
 	}
 }

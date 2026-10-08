@@ -1,55 +1,100 @@
 package users
 
 import (
-	"sync"
+	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Guiziin227/goCleanArc/internal/models"
 	"github.com/google/uuid"
 )
 
 type Users struct {
-	mu    sync.RWMutex
-	users []models.User
+	db *sql.DB
 }
 
-func NewUsers() *Users {
+func NewUsers(db *sql.DB) *Users {
 	return &Users{
-		users: make([]models.User, 0),
+		db: db,
 	}
 }
 
-func (u *Users) GetAll() []models.User {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
-	return u.users
-}
+func (u *Users) GetAll(ctx context.Context) ([]models.User, error) {
+	rows, err := u.db.QueryContext(ctx, ""+
+		"SELECT id, name, email "+
+		"FROM users "+
+		"ORDER BY name")
 
-func (u *Users) EmailExists(email string) bool {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-	for _, user := range u.users {
-		if user.Email == email {
-			return true
+	result := make([]models.User, 0)
+
+	for rows.Next() {
+		var user models.User
+
+		if err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Email); err != nil {
+			return nil, err
 		}
+
+		result = append(result, user)
 	}
-	return false
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func (u *Users) Add(newUser models.User) {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	u.users = append(u.users, newUser)
+func (u *Users) GetById(ctx context.Context, id uuid.UUID) (models.User, error) {
+
+	var user models.User
+
+	err := u.db.QueryRowContext(ctx, "SELECT id, name, email "+
+		"FROM users "+
+		"WHERE id = $1", id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return models.User{}, nil
+	}
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetById(id uuid.UUID) models.User {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
+func (u *Users) Add(ctx context.Context, newUser models.User) error {
 
-	for _, user := range u.users {
-		if user.ID == id {
-			return user
-		}
+	_, err := u.db.ExecContext(ctx,
+		"INSERT INTO users (id, name, email) "+
+			"VALUES ($1, $2, $3)",
+		newUser.ID,
+		newUser.Name,
+		newUser.Email)
+
+	if err != nil {
+		return err
 	}
-	return models.User{}
+
+	return nil
+}
+
+func (u *Users) EmailExists(ctx context.Context, email string) (bool, error) {
+	var exists bool
+	err := u.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

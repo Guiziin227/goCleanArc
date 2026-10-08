@@ -16,7 +16,11 @@ func (h Handlers) registerUserEndpoints() {
 
 func (h Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
 
-	users := h.usecases.GetAll()
+	users, err := h.usecases.GetAll(r.Context())
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(users)
@@ -26,7 +30,13 @@ func (h Handlers) getUserById(w http.ResponseWriter, r *http.Request) {
 	// Extraindo o ID do usuário da URL
 	id := r.URL.Path[len("/users/"):]
 
-	user, err := h.usecases.GetById(uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.usecases.GetById(r.Context(), parsedID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -48,7 +58,7 @@ func (h Handlers) addUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.usecases.Add(req)
+	id, err := h.usecases.Add(r.Context(), req)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
