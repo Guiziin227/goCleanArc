@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: goclean
+    environment:
+      POSTGRES_DB: goclean
+      POSTGRES_USER: goclean
+      POSTGRES_PASSWORD: goclean
+    ports:
+      - "5432:5432"
