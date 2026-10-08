@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/Guiziin227/goCleanArc/internal/models"
 	"github.com/Guiziin227/goCleanArc/internal/repositories/users"
+	"github.com/google/uuid"
 )
 
 type Repositories struct {
@@ -10,6 +11,7 @@ type Repositories struct {
 		GetAll() []models.User
 		Add(newUser models.User)
 		EmailExists(email string) bool
+		GetById(id uuid.UUID) models.User
 	}
 }
 

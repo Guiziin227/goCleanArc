@@ -17,6 +17,7 @@ func NewHandlers(usecases *usecases.UseCases) *Handlers {
 		usecases: usecases,
 	}
 }
+
 func (h *Handlers) Listen(port int) error {
 	h.registerUserEndpoints()
 

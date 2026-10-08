@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/Guiziin227/goCleanArc/internal/models"
+	"github.com/google/uuid"
 )
 
 type Users struct {
@@ -39,4 +40,16 @@ func (u *Users) Add(newUser models.User) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.users = append(u.users, newUser)
+}
+
+func (u *Users) GetById(id uuid.UUID) models.User {
+	u.mu.RLock()
+	defer u.mu.RUnlock()
+
+	for _, user := range u.users {
+		if user.ID == id {
+			return user
+		}
+	}
+	return models.User{}
 }

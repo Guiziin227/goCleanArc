@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"github.com/Guiziin227/goCleanArc/internal/models"
+	"github.com/google/uuid"
 )
 
 func (h Handlers) registerUserEndpoints() {
 	http.HandleFunc("GET /users", h.getAllUsers)
 	http.HandleFunc("POST /users", h.addUser)
+	http.HandleFunc("GET /users/{id}", h.getUserById)
 }
 
 func (h Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -18,6 +20,22 @@ func (h Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(users)
+}
+
+func (h Handlers) getUserById(w http.ResponseWriter, r *http.Request) {
+	// Extraindo o ID do usuário da URL
+	id := r.URL.Path[len("/users/"):]
+
+	user, err := h.usecases.GetById(uuid.MustParse(id))
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }
 
 func (h Handlers) addUser(w http.ResponseWriter, r *http.Request) {
