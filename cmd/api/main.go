@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"github.com/Guiziin227/goCleanArc/internal/database"
 	"github.com/Guiziin227/goCleanArc/internal/handlers"
@@ -22,8 +23,9 @@ func main() {
 
 	h := handlers.NewHandlers(useCase)
 
-	err = h.Listen(8000)
-	if err != nil {
+	log.Println("Listening on :8000")
+
+	if err := http.ListenAndServe(":8000", h.Router()); err != nil {
 		log.Fatal(err)
 	}
 }

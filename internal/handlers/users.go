@@ -5,16 +5,11 @@ import (
 	"net/http"
 
 	"github.com/Guiziin227/goCleanArc/internal/models"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func (h Handlers) registerUserEndpoints() {
-	http.HandleFunc("GET /users", h.getAllUsers)
-	http.HandleFunc("POST /users", h.addUser)
-	http.HandleFunc("GET /users/{id}", h.getUserById)
-}
-
-func (h Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.usecases.GetAll(r.Context())
 	if err != nil {
@@ -24,12 +19,15 @@ func (h Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(users)
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		return
+	}
 }
 
-func (h Handlers) getUserById(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) getUserByID(w http.ResponseWriter, r *http.Request) {
 	// Extraindo o ID do usuário da URL
-	id := r.PathValue("id")
+	id := chi.URLParam(r, "id")
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
@@ -41,33 +39,48 @@ func (h Handlers) getUserById(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
+		err := json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		return
+	}
 }
 
-func (h Handlers) addUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) addUser(w http.ResponseWriter, r *http.Request) {
 
 	var req models.CreateUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.ErrorResponse{Reason: "Invalid request body"})
+		err := json.NewEncoder(w).Encode(models.ErrorResponse{Reason: "Invalid request body"})
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	id, err := h.usecases.Add(r.Context(), req)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
+		err := json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(models.CreateUserResponse{NewUserID: id})
+	err = json.NewEncoder(w).Encode(models.CreateUserResponse{NewUserID: id})
+	if err != nil {
+		return
+	}
 }
