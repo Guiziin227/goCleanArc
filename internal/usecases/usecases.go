@@ -19,11 +19,11 @@ func NewUseCases(repos *repositories.Repositories) *UseCases {
 	}
 }
 
-func (u UseCases) GetAll(ctx context.Context) ([]models.User, error) {
+func (u *UseCases) GetAll(ctx context.Context) ([]models.User, error) {
 	return u.Repos.User.GetAll(ctx)
 }
 
-func (u UseCases) GetById(ctx context.Context, id uuid.UUID) (models.User, error) {
+func (u *UseCases) GetById(ctx context.Context, id uuid.UUID) (models.User, error) {
 	user, err := u.Repos.User.GetById(ctx, id)
 	if err != nil {
 		return models.User{}, err
@@ -34,7 +34,7 @@ func (u UseCases) GetById(ctx context.Context, id uuid.UUID) (models.User, error
 	return user, nil
 }
 
-func (u UseCases) Add(ctx context.Context, newUser models.CreateUserRequest) (uuid.UUID, error) {
+func (u *UseCases) Add(ctx context.Context, newUser models.CreateUserRequest) (uuid.UUID, error) {
 
 	exists, err := u.Repos.User.EmailExists(ctx, newUser.Email)
 	if err != nil {
@@ -55,4 +55,8 @@ func (u UseCases) Add(ctx context.Context, newUser models.CreateUserRequest) (uu
 	}
 
 	return repoReq.ID, nil
+}
+
+func (u *UseCases) DeleteByID(ctx context.Context, id uuid.UUID) error {
+	return u.Repos.User.DeleteById(ctx, id)
 }

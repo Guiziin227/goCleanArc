@@ -21,6 +21,7 @@ func (h *Handlers) Router() http.Handler {
 		r.Get("/", h.getAllUsers)
 		r.Post("/", h.addUser)
 		r.Get("/{id}", h.getUserByID)
+		r.Delete("/{id}", h.deleteByID)
 	})
 
 	return r

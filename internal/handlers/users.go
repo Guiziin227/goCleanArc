@@ -84,3 +84,31 @@ func (h *Handlers) addUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *Handlers) deleteByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	if len(id) == 0 {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	err = h.usecases.DeleteByID(r.Context(), parsedID)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		err := json.NewEncoder(w).Encode(models.ErrorResponse{Reason: err.Error()})
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
