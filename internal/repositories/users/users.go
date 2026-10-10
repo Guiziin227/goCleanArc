@@ -98,3 +98,11 @@ func (u *Users) EmailExists(ctx context.Context, email string) (bool, error) {
 	}
 	return exists, nil
 }
+
+func (u *Users) DeleteById(ctx context.Context, id uuid.UUID) error {
+	_, err := u.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}

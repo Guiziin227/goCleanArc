@@ -14,6 +14,7 @@ type UserRepository interface {
 	Add(ctx context.Context, newUser models.User) error
 	EmailExists(ctx context.Context, email string) (bool, error)
 	GetById(ctx context.Context, id uuid.UUID) (models.User, error)
+	DeleteById(ctx context.Context, id uuid.UUID) error
 }
 
 type Repositories struct {
