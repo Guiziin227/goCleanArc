@@ -29,7 +29,7 @@ func (h Handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 func (h Handlers) getUserById(w http.ResponseWriter, r *http.Request) {
 	// Extraindo o ID do usuário da URL
-	id := r.URL.Path[len("/users/"):]
+	id := r.PathValue("id")
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
